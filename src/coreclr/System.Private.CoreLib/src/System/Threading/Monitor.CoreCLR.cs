@@ -22,6 +22,9 @@ namespace System.Threading
 {
     public static partial class Monitor
     {
+        internal static ConditionalWeakTable<object, string> s_lockFileTable = new ConditionalWeakTable<object, string>();
+        internal static ConditionalWeakTable<object, string> s_lockFileTable2 = new ConditionalWeakTable<object, string>();
+
         /*=========================================================================
         ** Obtain the monitor lock of obj. Will block if another thread holds the lock
         ** Will not block if the current thread holds the lock,
@@ -46,6 +49,15 @@ namespace System.Threading
 
             ReliableEnter(obj, ref lockTaken);
             Debug.Assert(lockTaken);
+
+            s_lockFileTable.Add(obj, $"{new StackFrame(1, true).GetFileName()}:{new StackFrame(1, true).GetFileLineNumber()}");
+        }
+
+        public static void Enter(object obj, ref bool lockTaken, string filePath, int fileLine)
+        {
+            Enter(obj, ref lockTaken);
+
+            s_lockFileTable2.Add(obj, $"{filePath}:{fileLine}");
         }
 
         [DoesNotReturn]
@@ -56,8 +68,6 @@ namespace System.Threading
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void ReliableEnter(object obj, ref bool lockTaken);
-
-
 
         /*=========================================================================
         ** Release the monitor lock. If one or more threads are waiting to acquire the
@@ -70,6 +80,15 @@ namespace System.Threading
         =========================================================================*/
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void Exit(object obj);
+
+        public static void Exit2(object obj)
+        {
+            s_lockFileTable.Remove(obj);
+            s_lockFileTable2.Remove(obj);
+
+            Exit(obj);
+        }
+
 
         /*=========================================================================
         ** Similar to Enter, but will never block. That is, if the current thread can

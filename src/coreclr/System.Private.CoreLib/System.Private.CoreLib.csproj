@@ -21,6 +21,7 @@
 
     <FeaturePortableThreadPool>true</FeaturePortableThreadPool>
     <FeaturePortableTimer>true</FeaturePortableTimer>
+    <GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
   </PropertyGroup>
 
   <ItemGroup>
